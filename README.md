@@ -68,13 +68,14 @@ medical-camp-portal/
 │   ├── src/
 │   │   ├── components/         # Navbar, Footer, CampCard, States (loading/error/empty/toast)
 │   │   ├── pages/               # Home, Camps, CampDetails, Register, RegistrationSuccess, Contact, Admin, NotFound
-│   │   ├── services/api.js      # Axios client + error normalization
+│   │   ├── services/api.js      # Axios client + error normalization (relative /api)
 │   │   ├── App.jsx              # Route definitions
 │   │   ├── main.jsx
 │   │   └── index.css            # Design system (colors, type, components)
 │   ├── index.html
 │   └── package.json
 ├── .env.example                 # Backend environment variables
+├── vercel.json                  # Vercel Services: frontend + backend
 └── README.md
 ```
 
@@ -155,8 +156,9 @@ Edit `backend/.env`:
 
 ```
 DATABASE_URL=mysql+pymysql://root:YOUR_PASSWORD@localhost:3306/medical_camp_db
-FRONTEND_ORIGIN=http://localhost:5173
 ```
+
+`FRONTEND_ORIGIN` is optional. The Vite dev server proxies `/api` to port 8000, so the browser stays same-origin and CORS is not involved. Set `FRONTEND_ORIGIN` only if a page on another origin calls the API directly.
 
 Seed the sample camps (run once):
 
@@ -166,8 +168,9 @@ python seed.py
 
 > Note: if `DATABASE_URL` is not set at all, the backend falls back to a
 > local SQLite file (`medical_camp.db`) so you can smoke-test the API
-> without MySQL installed. For the real project, always set `DATABASE_URL`
-> to your MySQL connection string as shown above.
+> without MySQL installed. On Vercel that fallback file is
+> `/tmp/medical_camp.db` and does not persist. For the real project, always
+> set `DATABASE_URL` to a MySQL connection string the runtime can reach.
 
 ---
 
@@ -176,14 +179,9 @@ python seed.py
 ```bash
 cd frontend
 npm install
-cp .env.example .env
 ```
 
-Edit `frontend/.env` if your backend runs on a different host/port:
-
-```
-VITE_API_URL=http://localhost:8000
-```
+No frontend `.env` is required. The client calls relative `/api` paths. `npm run dev` proxies those to `http://localhost:8000`. Set `VITE_API_URL` only when the API is on a different host (the value is inlined at build time).
 
 ---
 
@@ -191,15 +189,32 @@ VITE_API_URL=http://localhost:8000
 
 | Location | Variable | Purpose |
 |---|---|---|
-| `backend/.env` | `DATABASE_URL` | MySQL connection string |
-| `backend/.env` | `FRONTEND_ORIGIN` | Allowed CORS origin(s), comma-separated |
-| `frontend/.env` | `VITE_API_URL` | Base URL of the FastAPI backend |
+| `backend/.env` or Vercel | `DATABASE_URL` | MySQL connection string. Required for a real deployment. |
+| `backend/.env` or Vercel | `FRONTEND_ORIGIN` | Optional. Comma-separated CORS origins when the browser calls the API cross-origin. |
+| `frontend/.env` | `VITE_API_URL` | Optional. Absolute API origin, baked in at build time. Leave unset on Vercel. |
 
 Never commit real `.env` files — only `.env.example` is checked in.
 
 ---
 
-## 10. How to Run the Backend
+## 10. Deploy on Vercel
+
+This repo is one Vercel project with two [services](https://vercel.com/docs/services) (Beta):
+
+| Service | Root | Framework | Public path |
+|---|---|---|---|
+| `frontend` | `frontend` | Vite | `/` (everything except `/api`) |
+| `backend` | `backend` | FastAPI (`app.main:app`) | `/api/*` |
+
+Neither service is internal. There is no service binding: the React app calls the API from the browser, and bindings are injected only into server functions at runtime. FastAPI routes already use the `/api` prefix, which matches the public rewrite, so the path is not stripped.
+
+The frontend service rewrites app paths to `/index.html` so routes such as `/camps/1` load the SPA. Requests under `/src/`, `/node_modules/`, and `/@` are left alone so `vercel dev` can serve Vite modules. Production files such as `/assets/*.js` are static files and are served before that rewrite.
+
+Set `DATABASE_URL` on the Vercel project to a MySQL server that Vercel can reach (not `localhost`). Tables are created on startup or on the first request. Sample camps are not inserted automatically; from a machine that can reach that database, run `python seed.py` in `backend/` with the same `DATABASE_URL`.
+
+Do not set `VITE_API_URL` for the Vercel deployment. Preview and production both call relative `/api` on their own host.
+
+## 11. How to Run the Backend
 
 ```bash
 cd backend
@@ -213,7 +228,7 @@ The API will be available at `http://localhost:8000`, and interactive docs
 
 ---
 
-## 11. How to Run the Frontend
+## 12. How to Run the Frontend
 
 ```bash
 cd frontend
@@ -231,7 +246,7 @@ npm run preview
 
 ---
 
-## 12. API Endpoints
+## 13. API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -247,7 +262,7 @@ npm run preview
 
 ---
 
-## 13. Sample API Requests
+## 14. Sample API Requests
 
 **Create a registration**
 
@@ -297,7 +312,7 @@ field-level errors:
 
 ---
 
-## 14. Testing the Complete Registration Flow
+## 15. Testing the Complete Registration Flow
 
 1. Start MySQL, then the backend (`uvicorn app.main:app --reload`), then run
    `python seed.py` once to load the 4 sample camps.
@@ -322,7 +337,7 @@ return the expected responses and status codes).
 
 ---
 
-## 15. User-to-Admin Flow Summary
+## 16. User-to-Admin Flow Summary
 
 ```
 Home → View Camps → Camp Details → Register Now → Registration Form

@@ -6,10 +6,10 @@ Run this once after setting up the database to populate sample camps.
 """
 from datetime import date
 
-from app.database import Base, engine, SessionLocal
+from app.database import SessionLocal, ensure_schema
 from app import models
 
-Base.metadata.create_all(bind=engine)
+ensure_schema()
 
 CAMPS = [
     dict(

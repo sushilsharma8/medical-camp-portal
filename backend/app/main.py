@@ -1,4 +1,6 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,25 +8,40 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from .database import Base, engine
+from .database import ensure_schema
 from .routes import camps, registrations
 
-# Create all tables if they don't exist yet.
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Schema setup talks to the database, so it must not run at import time
+    # (Vercel may import the app during build, when DATABASE_URL is absent).
+    try:
+        ensure_schema()
+    except Exception:
+        logger.exception("Database schema setup failed; requests will retry")
+    yield
+
 
 app = FastAPI(
     title="Medical Camp Registration Portal API",
     description="REST API for browsing medical camps and managing registrations.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
-origins_env = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+# Same-origin browser calls (Vercel /api rewrite, Vite dev proxy) do not use
+# CORS. FRONTEND_ORIGIN is for a cross-origin client, such as a custom
+# VITE_API_URL. Unset means allow any origin without credentials.
+origins_env = os.getenv("FRONTEND_ORIGIN", "")
 origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
-    allow_credentials=True,
+    allow_credentials=bool(origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )

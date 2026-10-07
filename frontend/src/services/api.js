@@ -1,6 +1,11 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Same-origin relative URLs by default. On Vercel, top-level rewrites send
+// /api/* to the backend service, so the browser must call /api on this host.
+// VITE_API_URL is optional and only for a cross-origin API. It is inlined at
+// build time; do not point it at a service-binding variable (those exist only
+// inside server functions at runtime).
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 const client = axios.create({
   baseURL: API_BASE_URL,
