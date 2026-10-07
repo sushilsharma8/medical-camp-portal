@@ -208,6 +208,8 @@ This repo is one Vercel project with two [services](https://vercel.com/docs/serv
 
 Neither service is internal. There is no service binding: the React app calls the API from the browser, and bindings are injected only into server functions at runtime. FastAPI routes already use the `/api` prefix, which matches the public rewrite, so the path is not stripped.
 
+The frontend service rewrites app paths to `/index.html` so routes such as `/camps/1` load the SPA. Requests under `/src/`, `/node_modules/`, and `/@` are left alone so `vercel dev` can serve Vite modules. Production files such as `/assets/*.js` are static files and are served before that rewrite.
+
 Set `DATABASE_URL` on the Vercel project to a MySQL server that Vercel can reach (not `localhost`). Tables are created on startup or on the first request. Sample camps are not inserted automatically; from a machine that can reach that database, run `python seed.py` in `backend/` with the same `DATABASE_URL`.
 
 Do not set `VITE_API_URL` for the Vercel deployment. Preview and production both call relative `/api` on their own host.

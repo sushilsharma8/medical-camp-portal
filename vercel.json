@@ -10,7 +10,10 @@
       "root": "frontend",
       "framework": "vite",
       "rewrites": [
-        { "source": "/(.*)", "destination": "/index.html" }
+        {
+          "source": "/((?!@|src/|node_modules/).*)",
+          "destination": "/index.html"
+        }
       ]
     }
   },
