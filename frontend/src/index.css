@@ -172,6 +172,7 @@ img {
   display: flex;
   gap: 6px;
   align-items: center;
+  min-width: 0;
 }
 
 .nav-links a {
@@ -194,10 +195,10 @@ img {
   cursor: pointer;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   .nav-links {
     position: absolute;
-    top: 68px;
+    top: 100%;
     left: 0;
     right: 0;
     background: var(--paper);
@@ -206,6 +207,7 @@ img {
     border-bottom: 1px solid var(--border);
     padding: 8px 24px 16px;
     display: none;
+    box-shadow: var(--shadow-soft);
   }
   .nav-links.open {
     display: flex;
@@ -217,7 +219,8 @@ img {
 
 /* ===================== Hero ===================== */
 .hero {
-  padding: 64px 0 56px;
+  padding-top: 64px;
+  padding-bottom: 56px;
 }
 
 .hero-grid {
@@ -269,7 +272,8 @@ img {
 
 /* ===================== Sections ===================== */
 .section {
-  padding: 56px 0;
+  padding-top: 56px;
+  padding-bottom: 56px;
 }
 
 .section-head {
@@ -391,15 +395,20 @@ img {
 
 .camp-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: auto;
   padding-top: 8px;
 }
 
 .camp-card-actions .btn {
-  flex: 1;
-  padding: 10px 14px;
+  flex: 1 1 7rem;
+  min-width: 0;
+  padding: 10px 12px;
   font-size: 0.88rem;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 /* ===================== Camp details ===================== */
@@ -439,20 +448,28 @@ img {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 32px;
+  width: 100%;
   max-width: 720px;
+  min-width: 0;
   margin: 0 auto;
   box-shadow: var(--shadow-soft);
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
 @media (max-width: 640px) {
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .form-card {
+    padding: 22px 16px;
+  }
+  .form-actions .btn {
+    width: 100%;
   }
 }
 
@@ -461,6 +478,7 @@ img {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .field.full {
@@ -476,6 +494,9 @@ img {
 .field input,
 .field select,
 .field textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 11px 13px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border);
@@ -509,6 +530,7 @@ img {
 .form-actions {
   margin-top: 22px;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -534,6 +556,12 @@ img {
   box-shadow: var(--shadow-soft);
 }
 
+@media (max-width: 640px) {
+  .success-card {
+    padding: 28px 16px;
+  }
+}
+
 .success-badge {
   width: 64px;
   height: 64px;
@@ -548,6 +576,7 @@ img {
 
 .reg-id-pill {
   display: inline-block;
+  max-width: 100%;
   background: var(--teal-900);
   color: var(--white);
   font-family: var(--font-head);
@@ -556,6 +585,7 @@ img {
   padding: 10px 20px;
   border-radius: 100px;
   margin: 14px 0;
+  overflow-wrap: anywhere;
 }
 
 .success-summary {
@@ -570,8 +600,14 @@ img {
 .success-summary div {
   display: flex;
   justify-content: space-between;
+  gap: 16px;
   padding: 6px 0;
   border-bottom: 1px dashed var(--border);
+}
+.success-summary div span:last-child {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 .success-summary div:last-child {
   border-bottom: none;
@@ -605,6 +641,10 @@ img {
   position: fixed;
   bottom: 24px;
   right: 24px;
+  left: 24px;
+  width: fit-content;
+  margin-left: auto;
+  max-width: calc(100% - 48px);
   background: var(--teal-900);
   color: var(--white);
   padding: 14px 20px;
@@ -647,6 +687,8 @@ img {
 
 .table-wrap {
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -716,6 +758,8 @@ tbody tr:hover {
   padding: 28px;
   max-width: 480px;
   width: 100%;
+  max-height: min(90vh, 720px);
+  overflow-y: auto;
 }
 
 .modal h3 {
@@ -725,6 +769,7 @@ tbody tr:hover {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 22px;
 }
@@ -781,6 +826,10 @@ footer {
   display: flex;
   gap: 14px;
   align-items: flex-start;
+}
+
+.contact-info-item p {
+  overflow-wrap: anywhere;
 }
 
 .contact-info-item .icon-wrap {
