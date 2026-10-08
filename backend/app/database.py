@@ -50,11 +50,28 @@ Base = declarative_base()
 
 
 def ensure_schema() -> None:
-    """Create tables on first use. Importing the app must not open a database."""
+    """Create tables, then seed sample camps if the table is empty.
+
+    Called from application startup and from the first database request.
+    Importing the app must not open a database. A fresh SQLite file (including
+    the ephemeral ``/tmp`` file on Vercel) therefore gets the sample camps on
+    every new process.
+    """
     global _schema_ready
     if _schema_ready:
         return
     Base.metadata.create_all(bind=engine)
+    # Imported here so this module can finish loading before models import Base.
+    from .seed_data import seed_camps
+
+    db = SessionLocal()
+    try:
+        seed_camps(db)
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
     _schema_ready = True
 
 
