@@ -59,10 +59,11 @@ medical-camp-portal/
 │   │   ├── models.py          # Camp, Registration ORM models
 │   │   ├── schemas.py         # Pydantic request/response schemas + validation
 │   │   ├── crud.py            # DB access functions
+│   │   ├── seed_data.py       # Sample camps; inserted when the table is empty
 │   │   └── routes/
 │   │       ├── camps.py
 │   │       └── registrations.py
-│   ├── seed.py                 # Populates the 4 sample camps
+│   ├── seed.py                 # Manual wrapper around the same seed function
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
@@ -160,7 +161,10 @@ DATABASE_URL=mysql+pymysql://root:YOUR_PASSWORD@localhost:3306/medical_camp_db
 
 `FRONTEND_ORIGIN` is optional. The Vite dev server proxies `/api` to port 8000, so the browser stays same-origin and CORS is not involved. Set `FRONTEND_ORIGIN` only if a page on another origin calls the API directly.
 
-Seed the sample camps (run once):
+The four sample camps are inserted automatically when the camps table is
+empty (on startup, and again on the first request if startup did not finish).
+You can still seed by hand; it uses the same function and does nothing when
+rows are already present:
 
 ```bash
 python seed.py
@@ -169,8 +173,9 @@ python seed.py
 > Note: if `DATABASE_URL` is not set at all, the backend falls back to a
 > local SQLite file (`medical_camp.db`) so you can smoke-test the API
 > without MySQL installed. On Vercel that fallback file is
-> `/tmp/medical_camp.db` and does not persist. For the real project, always
-> set `DATABASE_URL` to a MySQL connection string the runtime can reach.
+> `/tmp/medical_camp.db` and does not persist across instances, so each new
+> process seeds the sample camps again. A MySQL `DATABASE_URL` still works
+> the same way: empty camps table, sample rows; existing rows are left alone.
 
 ---
 
@@ -189,7 +194,7 @@ No frontend `.env` is required. The client calls relative `/api` paths. `npm run
 
 | Location | Variable | Purpose |
 |---|---|---|
-| `backend/.env` or Vercel | `DATABASE_URL` | MySQL connection string. Required for a real deployment. |
+| `backend/.env` or Vercel | `DATABASE_URL` | Optional MySQL connection string. Unset uses the SQLite fallback. |
 | `backend/.env` or Vercel | `FRONTEND_ORIGIN` | Optional. Comma-separated CORS origins when the browser calls the API cross-origin. |
 | `frontend/.env` | `VITE_API_URL` | Optional. Absolute API origin, baked in at build time. Leave unset on Vercel. |
 
@@ -210,7 +215,7 @@ Neither service is internal. There is no service binding: the React app calls th
 
 The frontend service rewrites app paths to `/index.html` so routes such as `/camps/1` load the SPA. Requests under `/src/`, `/node_modules/`, and `/@` are left alone so `vercel dev` can serve Vite modules. Production files such as `/assets/*.js` are static files and are served before that rewrite.
 
-Set `DATABASE_URL` on the Vercel project to a MySQL server that Vercel can reach (not `localhost`). Tables are created on startup or on the first request. Sample camps are not inserted automatically; from a machine that can reach that database, run `python seed.py` in `backend/` with the same `DATABASE_URL`.
+Tables are created on startup and on the first request. If the camps table is empty, the four sample camps are inserted then. With no `DATABASE_URL`, Vercel uses `/tmp/medical_camp.db`; that file is new on a cold start, so `/api/camps` still returns the sample camps. Set `DATABASE_URL` only when you want MySQL instead. The connection string is otherwise unchanged, and existing camp rows are not duplicated.
 
 Do not set `VITE_API_URL` for the Vercel deployment. Preview and production both call relative `/api` on their own host.
 
@@ -314,8 +319,9 @@ field-level errors:
 
 ## 15. Testing the Complete Registration Flow
 
-1. Start MySQL, then the backend (`uvicorn app.main:app --reload`), then run
-   `python seed.py` once to load the 4 sample camps.
+1. Start MySQL (or leave `DATABASE_URL` unset to use SQLite), then the
+   backend (`uvicorn app.main:app --reload`). The 4 sample camps load
+   automatically when the camps table is empty.
 2. Start the frontend (`npm run dev`) and open `http://localhost:5173`.
 3. On the Home page, click **View Camps**.
 4. Click **View Details** on any camp to see its full description and
